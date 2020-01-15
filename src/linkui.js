@@ -320,7 +320,7 @@ export default class LinkUI extends Plugin {
 		// https://github.com/ckeditor/ckeditor5-link/issues/78
 		// https://github.com/ckeditor/ckeditor5-link/issues/123
 		this.formView.urlInputView.inputView.element.value = linkCommand.value || '';
-		this.formView.idInputView.inputView.element.value = linkCommand.valueId || '';
+		this.formView.idInputView.inputView.element.value = linkCommand.valueId || 'std';
 		this.formView.altInputView.inputView.element.value = linkCommand.valueAlt || '';
 	}
 

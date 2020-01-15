@@ -230,6 +230,7 @@ export default class LinkFormView extends View {
 
 		labeledInput.label = 'id';
 		labeledInput.inputView.placeholder = 'no id';
+		labeledInput.inputView.template.attributes.class.push('ck-hidden')
 
 		return labeledInput;
 	}
@@ -240,6 +241,7 @@ export default class LinkFormView extends View {
 
 		labeledInput.label = 'desc';
 		labeledInput.inputView.placeholder = 'no desc';
+		labeledInput.inputView.template.attributes.class.push('ck-hidden')
 
 		return labeledInput;
 	}

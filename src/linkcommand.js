@@ -28,6 +28,8 @@ export default class LinkCommand extends Command {
 
 	constructor( editor ) {
 		super( editor );
+		this.set('valueId')
+		this.set('valueAlt')
 
 		/**
 		 * A collection of {@link module:link/utils~ManualDecorator manual decorators}
@@ -154,7 +156,7 @@ export default class LinkCommand extends Command {
 				if ( selection.hasAttribute( 'linkHref' ) ) {
 					// Then update `linkHref` value.
 					const linkRange = findLinkRange( position, selection.getAttribute( 'linkHref' ), model );
-					
+
 					writer.setAttribute( 'linkId', param.id, linkRange );
 					writer.setAttribute( 'linkAlt', param.alt, linkRange );
 					writer.setAttribute( 'linkHref', param.href, linkRange );
@@ -175,7 +177,7 @@ export default class LinkCommand extends Command {
 				// So, if `href` is empty, do not create text node.
 				else if ( href !== '' ) {
 					const attributes = toMap( selection.getAttributes() );
-					
+
 					attributes.set( 'linkId', param.id );
 					attributes.set( 'linkAlt', param.alt );
 					attributes.set( 'linkHref', param.href );
