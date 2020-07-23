@@ -62,36 +62,36 @@ export default class LinkEditing extends Plugin {
 		editor.model.schema.extend( '$text', { allowAttributes: 'linkAlt' } );
 
 		editor.conversion.for( 'dataDowncast' )
-			.attributeToElement({ 
-				model: 'linkId', 
-				view: (id, writer) => writer.createAttributeElement('a', { id }, { priority: 5 }) 
+			.attributeToElement({
+				model: 'linkId',
+				view: (id, writer) => writer.createAttributeElement('a', { id }, { priority: 5 })
 			})
-			.attributeToElement({ 
-				model: 'linkAlt', 
-				view: (alt, writer) => writer.createAttributeElement('a', { alt }, { priority: 5 }) 
+			.attributeToElement({
+				model: 'linkAlt',
+				view: (alt, writer) => writer.createAttributeElement('a', { alt }, { priority: 5 })
 			})
-			.attributeToElement({ 
-				model: 'linkHref', 
-				view: createLinkElement 
+			.attributeToElement({
+				model: 'linkHref',
+				view: createLinkElement
 			});
 
 
 		editor.conversion.for( 'editingDowncast' )
-			.attributeToElement({ 
-				model: 'linkId', 
-				view: ( id, writer ) => writer.createAttributeElement('a', { id }, { priority: 5 }), 
-				converterPriority:'low' 
+			.attributeToElement({
+				model: 'linkId',
+				view: ( id, writer ) => writer.createAttributeElement('a', { id }, { priority: 5 }),
+				converterPriority:'low'
 			})
-			.attributeToElement({ 
-				model: 'linkAlt', 
-				view: ( alt, writer ) => writer.createAttributeElement('a', { alt }, { priority: 5 }), 
-				converterPriority: 'low' 
+			.attributeToElement({
+				model: 'linkAlt',
+				view: ( alt, writer ) => writer.createAttributeElement('a', { alt }, { priority: 5 }),
+				converterPriority: 'low'
 			})
-			.attributeToElement({ 
-				model: 'linkHref', 
+			.attributeToElement({
+				model: 'linkHref',
 				view: ( href, writer ) => createLinkElement( ensureSafeUrl( href ), writer )
 			});
-			
+
 
 		editor.conversion.for( 'upcast' )
 			.elementToAttribute({

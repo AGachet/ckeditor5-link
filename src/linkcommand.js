@@ -58,10 +58,11 @@ export default class LinkCommand extends Command {
 	refresh() {
 		const model = this.editor.model;
 		const doc = model.document;
-
-		this.value = doc.selection.getAttribute( 'linkHref' );
-		this.valueId = doc.selection.getAttribute( 'linkId' );
-		this.valueAlt = doc.selection.getAttribute( 'linkAlt' );
+		this.value =  doc.selection.getAttribute( 'linkHref' );
+		this.valueId = doc.selection.getAttribute( 'linkId' ) || 'std';
+		this.valueAlt = this.valueId === 'std'
+			? doc.selection.getAttribute( 'linkHref' )
+			: doc.selection.getAttribute( 'linkAlt' );
 
 		for ( const manualDecorator of this.manualDecorators ) {
 			manualDecorator.value = this._getDecoratorStateFromModel( manualDecorator.id );
