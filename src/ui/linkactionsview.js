@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2019, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -81,7 +81,13 @@ export default class LinkActionsView extends View {
 		 * @member {String}
 		 */
 		this.set( 'href' );
-		this.set( 'id' );
+
+		/**
+		 * The value of the "alt" attribute of the link to use in the {@link #previewButtonView}.
+		 *
+		 * @observable
+		 * @member {String}
+		 */
 		this.set( 'alt' );
 
 		/**
@@ -119,7 +125,7 @@ export default class LinkActionsView extends View {
 			attributes: {
 				class: [
 					'ck',
-					'ck-link-actions',
+					'ck-link-actions'
 				],
 
 				// https://github.com/ckeditor/ckeditor5-link/issues/90
@@ -211,9 +217,9 @@ export default class LinkActionsView extends View {
 					'ck-link-actions__preview'
 				],
 				href: bind.to( 'href', href => href && ensureSafeUrl( href ) ),
-				id: bind.to( 'id', id => id ),
 				alt: bind.to( 'alt', alt => alt ),
-				target: '_blank'
+				target: '_blank',
+				rel: 'noopener noreferrer'
 			}
 		} );
 

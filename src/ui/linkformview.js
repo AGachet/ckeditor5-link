@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2019, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -12,8 +12,9 @@ import ViewCollection from '@ckeditor/ckeditor5-ui/src/viewcollection';
 
 import ButtonView from '@ckeditor/ckeditor5-ui/src/button/buttonview';
 import SwitchButtonView from '@ckeditor/ckeditor5-ui/src/button/switchbuttonview';
-import LabeledInputView from '@ckeditor/ckeditor5-ui/src/labeledinput/labeledinputview';
-import InputTextView from '@ckeditor/ckeditor5-ui/src/inputtext/inputtextview';
+
+import LabeledFieldView from '@ckeditor/ckeditor5-ui/src/labeledfield/labeledfieldview';
+import { createLabeledInputText } from '@ckeditor/ckeditor5-ui/src/labeledfield/utils';
 
 import submitHandler from '@ckeditor/ckeditor5-ui/src/bindings/submithandler';
 import FocusTracker from '@ckeditor/ckeditor5-utils/src/focustracker';
@@ -38,10 +39,10 @@ export default class LinkFormView extends View {
 	 * Also see {@link #render}.
 	 *
 	 * @param {module:utils/locale~Locale} [locale] The localization services instance.
-	 * @param {module:utils/collection~Collection} [manualDecorators] Reference to manual decorators in
-	 * {@link module:link/linkcommand~LinkCommand#manualDecorators}.
+	 * @param {module:link/linkcommand~LinkCommand} linkCommand Reference to {@link module:link/linkcommand~LinkCommand}.
+	 * @param {String} [protocol] A value of a protocol to be displayed in the input's placeholder.
 	 */
-	constructor( locale, manualDecorators = [] ) {
+	constructor( locale, linkCommand, protocol ) {
 		super( locale );
 
 		const t = locale.t;
@@ -65,10 +66,22 @@ export default class LinkFormView extends View {
 		/**
 		 * The URL input view.
 		 *
-		 * @member {module:ui/labeledinput/labeledinputview~LabeledInputView}
+		 * @member {module:ui/labeledfield/labeledfieldview~LabeledFieldView}
 		 */
-		this.urlInputView = this._createUrlInput();
+		this.urlInputView = this._createUrlInput( protocol );
+
+		/**
+		 * The ID input view.
+		 *
+		 * @member {module:ui/labeledfield/labeledfieldview~LabeledFieldView}
+		 */
 		this.idInputView = this._createIdInput();
+
+		/**
+		 * The ALT input view.
+		 *
+		 * @member {module:ui/labeledfield/labeledfieldview~LabeledFieldView}
+		 */
 		this.altInputView = this._createAltInput();
 
 		/**
@@ -95,7 +108,7 @@ export default class LinkFormView extends View {
 		 * @readonly
 		 * @type {module:ui/viewcollection~ViewCollection}
 		 */
-		this._manualDecoratorSwitches = this._createManualDecoratorSwitches( manualDecorators );
+		this._manualDecoratorSwitches = this._createManualDecoratorSwitches( linkCommand );
 
 		/**
 		 * A collection of child views in the form.
@@ -103,7 +116,7 @@ export default class LinkFormView extends View {
 		 * @readonly
 		 * @type {module:ui/viewcollection~ViewCollection}
 		 */
-		this.children = this._createFormChildren( manualDecorators );
+		this.children = this._createFormChildren( linkCommand.manualDecorators );
 
 		/**
 		 * A collection of views that can be focused in the form.
@@ -136,7 +149,7 @@ export default class LinkFormView extends View {
 
 		const classList = [ 'ck', 'ck-link-form' ];
 
-		if ( manualDecorators.length ) {
+		if ( linkCommand.manualDecorators.length ) {
 			classList.push( 'ck-link-form_layout-vertical' );
 		}
 
@@ -211,37 +224,36 @@ export default class LinkFormView extends View {
 	 * Creates a labeled input view.
 	 *
 	 * @private
-	 * @returns {module:ui/labeledinput/labeledinputview~LabeledInputView} Labeled input view instance.
+	 * @param {String} [protocol=http://] A value of a protocol to be displayed in the input's placeholder.
+	 * @returns {module:ui/labeledfield/labeledfieldview~LabeledFieldView} Labeled field view instance.
 	 */
-	_createUrlInput() {
+	_createUrlInput( protocol = 'https://' ) {
 		const t = this.locale.t;
-
-		const labeledInput = new LabeledInputView( this.locale, InputTextView );
+		const labeledInput = new LabeledFieldView( this.locale, createLabeledInputText );
 
 		labeledInput.label = t( 'Link URL' );
-		labeledInput.inputView.placeholder = 'https://example.com';
+		labeledInput.fieldView.placeholder = protocol + 'example.com';
 
 		return labeledInput;
 	}
+
 	_createIdInput() {
 		const t = this.locale.t;
-
-		const labeledInput = new LabeledInputView( this.locale, InputTextView );
+		const labeledInput = new LabeledFieldView( this.locale, createLabeledInputText );
 
 		labeledInput.label = 'id';
-		labeledInput.inputView.placeholder = 'no id';
-		labeledInput.inputView.template.attributes.class.push('ck-hidden')
+		labeledInput.fieldView.placeholder = 'no id';
+		labeledInput.fieldView.template.attributes.class.push('ck-hidden')
 
 		return labeledInput;
 	}
 	_createAltInput() {
 		const t = this.locale.t;
-
-		const labeledInput = new LabeledInputView( this.locale, InputTextView );
+		const labeledInput = new LabeledFieldView( this.locale, createLabeledInputText );
 
 		labeledInput.label = 'desc';
-		labeledInput.inputView.placeholder = 'no desc';
-		labeledInput.inputView.template.attributes.class.push('ck-hidden')
+		labeledInput.fieldView.placeholder = 'no desc';
+		labeledInput.fieldView.template.attributes.class.push('ck-hidden')
 
 		return labeledInput;
 	}
@@ -283,14 +295,13 @@ export default class LinkFormView extends View {
 	 * made based on {@link module:link/linkcommand~LinkCommand#manualDecorators}.
 	 *
 	 * @private
-	 * @param {module:utils/collection~Collection} manualDecorators A reference to the
-	 * collection of manual decorators stored in the link command.
+	 * @param {module:link/linkcommand~LinkCommand} linkCommand A reference to the link command.
 	 * @returns {module:ui/viewcollection~ViewCollection} of switch buttons.
 	 */
-	_createManualDecoratorSwitches( manualDecorators ) {
+	_createManualDecoratorSwitches( linkCommand ) {
 		const switches = this.createCollection();
 
-		for ( const manualDecorator of manualDecorators ) {
+		for ( const manualDecorator of linkCommand.manualDecorators ) {
 			const switchButton = new SwitchButtonView( this.locale );
 
 			switchButton.set( {
@@ -299,7 +310,9 @@ export default class LinkFormView extends View {
 				withText: true
 			} );
 
-			switchButton.bind( 'isOn' ).to( manualDecorator, 'value' );
+			switchButton.bind( 'isOn' ).toMany( [ manualDecorator, linkCommand ], 'value', ( decoratorValue, commandValue ) => {
+				return commandValue === undefined && decoratorValue === undefined ? manualDecorator.defaultValue : decoratorValue;
+			} );
 
 			switchButton.on( 'execute', () => {
 				manualDecorator.set( 'value', !switchButton.isOn );

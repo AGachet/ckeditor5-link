@@ -1,4 +1,4 @@
-# Copyright (c) 2003-2019, CKSource - Frederico Knabben. All rights reserved.
+# Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
 #
 #                                     !!! IMPORTANT !!!
 #
@@ -28,6 +28,10 @@ msgctxt "Label for the URL input in the Link URL editing balloon."
 msgid "Link URL"
 msgstr "Đường dẫn liên kết"
 
+msgctxt "Label for the image link button."
+msgid "Link image"
+msgstr ""
+
 msgctxt "Button opening the Link URL editing balloon."
 msgid "Edit link"
 msgstr "Sửa liên kết"
@@ -42,8 +46,8 @@ msgstr "Liên kết không có đường dẫn"
 
 msgctxt "The label of the switch button that controls whether the edited link will open in a new tab."
 msgid "Open in a new tab"
-msgstr ""
+msgstr "Mở trên tab mới"
 
 msgctxt "The label of the switch button that controls whether the edited link refers to downloadable resource."
 msgid "Downloadable"
-msgstr ""
+msgstr "Có thể tải về"

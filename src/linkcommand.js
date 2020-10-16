@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2019, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -8,9 +8,12 @@
  */
 
 import Command from '@ckeditor/ckeditor5-core/src/command';
-import findLinkRange from './findlinkrange';
+import findAttributeRange from '@ckeditor/ckeditor5-typing/src/utils/findattributerange';
 import toMap from '@ckeditor/ckeditor5-utils/src/tomap';
 import Collection from '@ckeditor/ckeditor5-utils/src/collection';
+import first from '@ckeditor/ckeditor5-utils/src/first';
+import AutomaticDecorators from './utils/automaticdecorators';
+import { isImageAllowed } from './utils';
 
 /**
  * The link command. It is used by the {@link module:link/link~Link link feature}.
@@ -41,6 +44,15 @@ export default class LinkCommand extends Command {
 		 * @type {module:utils/collection~Collection}
 		 */
 		this.manualDecorators = new Collection();
+
+		/**
+		 * An instance of the helper that ties together all {@link module:link/link~LinkDecoratorAutomaticDefinition}
+		 * that are used by the {@glink features/link link} and the {@glink features/image#linking-images linking images} features.
+		 *
+		 * @readonly
+		 * @type {module:link/utils~AutomaticDecorators}
+		 */
+		this.automaticDecorators = new AutomaticDecorators();
 	}
 
 	/**
@@ -58,17 +70,33 @@ export default class LinkCommand extends Command {
 	refresh() {
 		const model = this.editor.model;
 		const doc = model.document;
-		this.value =  doc.selection.getAttribute( 'linkHref' );
-		this.valueId = doc.selection.getAttribute( 'linkId' ) || 'std';
-		this.valueAlt = this.valueId === 'std'
-			? doc.selection.getAttribute( 'linkHref' )
-			: doc.selection.getAttribute( 'linkAlt' );
+
+		const selectedElement = first( doc.selection.getSelectedBlocks() );
+
+		// A check for the `LinkImage` plugin. If the selection contains an element, get values from the element.
+		// Currently the selection reads attributes from text nodes only. See #7429 and #7465.
+		if ( isImageAllowed( selectedElement, model.schema ) ) {
+			this.value = selectedElement.getAttribute( 'linkHref' );
+			this.valueId = selectedElement.getAttribute( 'linkId' ) || 'std';
+			this.valueAlt = this.valueId === 'std'
+				? selectedElement.getAttribute( 'linkHref' )
+				: selectedElement.getAttribute( 'linkAlt' );
+
+			this.isEnabled = model.schema.checkAttribute( selectedElement, 'linkHref' );
+		} else {
+			this.value = doc.selection.getAttribute( 'linkHref' );
+			this.valueId = doc.selection.getAttribute( 'linkId' ) || 'std';
+			this.valueAlt = this.valueId === 'std'
+				? doc.selection.getAttribute( 'linkHref' )
+				: doc.selection.getAttribute( 'linkAlt' );
+
+			this.isEnabled = model.schema.checkAttributeInSelection( doc.selection, 'linkHref' );
+		}
+
 
 		for ( const manualDecorator of this.manualDecorators ) {
 			manualDecorator.value = this._getDecoratorStateFromModel( manualDecorator.id );
 		}
-
-		this.isEnabled = model.schema.checkAttributeInSelection( doc.selection, 'linkHref' );
 	}
 
 	/**
@@ -156,7 +184,7 @@ export default class LinkCommand extends Command {
 				// When selection is inside text with `linkHref` attribute.
 				if ( selection.hasAttribute( 'linkHref' ) ) {
 					// Then update `linkHref` value.
-					const linkRange = findLinkRange( position, selection.getAttribute( 'linkHref' ), model );
+					const linkRange = findAttributeRange( position, 'linkHref', selection.getAttribute( 'linkHref' ), model );
 
 					writer.setAttribute( 'linkId', param.id, linkRange );
 					writer.setAttribute( 'linkAlt', param.alt, linkRange );
@@ -170,8 +198,8 @@ export default class LinkCommand extends Command {
 						writer.removeAttribute( item, linkRange );
 					} );
 
-					// Create new range wrapping changed link.
-					writer.setSelection( linkRange );
+					// Put the selection at the end of the updated link.
+					writer.setSelection( writer.createPositionAfter( linkRange.end.nodeBefore ) );
 				}
 				// If not then insert text node with `linkHref` attribute in place of caret.
 				// However, since selection in collapsed, attribute value will be used as data for text node.
@@ -191,15 +219,41 @@ export default class LinkCommand extends Command {
 
 					model.insertContent( node, position );
 
-					// Create new range wrapping created node.
-					writer.setSelection( writer.createRangeOn( node ) );
+					// Put the selection at the end of the inserted link.
+					writer.setSelection( writer.createPositionAfter( node ) );
 				}
+
+				// Remove the `linkHref` attribute and all link decorators from the selection.
+				// It stops adding a new content into the link element.
+				[ 'linkHref', 'linkId', 'linkAlt', ...truthyManualDecorators, ...falsyManualDecorators ].forEach( item => {
+					writer.removeSelectionAttribute( item );
+				} );
 			} else {
 				// If selection has non-collapsed ranges, we change attribute on nodes inside those ranges
-				// omitting nodes where `linkHref` attribute is disallowed.
+				// omitting nodes where the `linkHref` attribute is disallowed.
 				const ranges = model.schema.getValidRanges( selection.getRanges(), 'linkHref' );
 
+				// But for the first, check whether the `linkHref` attribute is allowed on selected blocks (e.g. the "image" element).
+				const allowedRanges = [];
+
+				for ( const element of selection.getSelectedBlocks() ) {
+					if ( model.schema.checkAttribute( element, 'linkHref' ) ) {
+						allowedRanges.push( writer.createRangeOn( element ) );
+					}
+				}
+
+				// Ranges that accept the `linkHref` attribute. Since we will iterate over `allowedRanges`, let's clone it.
+				const rangesToUpdate = allowedRanges.slice();
+
+				// For all selection ranges we want to check whether given range is inside an element that accepts the `linkHref` attribute.
+				// If so, we don't want to propagate applying the attribute to its children.
 				for ( const range of ranges ) {
+					if ( this._isRangeToUpdate( range, allowedRanges ) ) {
+						rangesToUpdate.push( range );
+					}
+				}
+
+				for ( const range of rangesToUpdate ) {
 					writer.setAttribute( 'linkHref', param.href, range );
 					writer.setAttribute( 'linkId', param.id, range );
 					writer.setAttribute( 'linkAlt', param.alt, range );
@@ -224,7 +278,36 @@ export default class LinkCommand extends Command {
 	 * @returns {Boolean} The information whether a given decorator is currently present in the selection.
 	 */
 	_getDecoratorStateFromModel( decoratorName ) {
-		const doc = this.editor.model.document;
-		return doc.selection.getAttribute( decoratorName ) || false;
+		const model = this.editor.model;
+		const doc = model.document;
+
+		const selectedElement = first( doc.selection.getSelectedBlocks() );
+
+		// A check for the `LinkImage` plugin. If the selection contains an element, get values from the element.
+		// Currently the selection reads attributes from text nodes only. See #7429 and #7465.
+		if ( isImageAllowed( selectedElement, model.schema ) ) {
+			return selectedElement.getAttribute( decoratorName );
+		}
+
+		return doc.selection.getAttribute( decoratorName );
+	}
+
+	/**
+	 * Checks whether specified `range` is inside an element that accepts the `linkHref` attribute.
+	 *
+	 * @private
+	 * @param {module:engine/view/range~Range} range A range to check.
+	 * @param {Array.<module:engine/view/range~Range>} allowedRanges An array of ranges created on elements where the attribute is accepted.
+	 * @returns {Boolean}
+	 */
+	_isRangeToUpdate( range, allowedRanges ) {
+		for ( const allowedRange of allowedRanges ) {
+			// A range is inside an element that will have the `linkHref` attribute. Do not modify its nodes.
+			if ( allowedRange.containsRange( range ) ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

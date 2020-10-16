@@ -1,4 +1,4 @@
-# Copyright (c) 2003-2019, CKSource - Frederico Knabben. All rights reserved.
+# Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
 #
 #                                     !!! IMPORTANT !!!
 #
@@ -18,7 +18,7 @@ msgstr ""
 
 msgctxt "Toolbar button tooltip for the Unlink feature."
 msgid "Unlink"
-msgstr "取消連結"
+msgstr "移除連結"
 
 msgctxt "Toolbar button tooltip for the Link feature."
 msgid "Link"
@@ -27,6 +27,10 @@ msgstr "連結"
 msgctxt "Label for the URL input in the Link URL editing balloon."
 msgid "Link URL"
 msgstr "連結˙ URL"
+
+msgctxt "Label for the image link button."
+msgid "Link image"
+msgstr "圖片連結"
 
 msgctxt "Button opening the Link URL editing balloon."
 msgid "Edit link"

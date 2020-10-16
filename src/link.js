@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2019, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2020, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
@@ -10,6 +10,7 @@
 import Plugin from '@ckeditor/ckeditor5-core/src/plugin';
 import LinkEditing from './linkediting';
 import LinkUI from './linkui';
+import AutoLink from './autolink';
 
 /**
  * The link plugin.
@@ -24,7 +25,7 @@ export default class Link extends Plugin {
 	 * @inheritDoc
 	 */
 	static get requires() {
-		return [ LinkEditing, LinkUI ];
+		return [ LinkEditing, LinkUI, AutoLink ];
 	}
 
 	/**
@@ -55,6 +56,28 @@ export default class Link extends Plugin {
  *
  * See {@link module:core/editor/editorconfig~EditorConfig all editor options}.
  * @interface LinkConfig
+ */
+
+/**
+ * When set, the editor will add the given protocol to the link when the user creates a link without one.
+ * For example, when the user is creating a link and types `ckeditor.com` in the link form input, during link submission
+ * the editor will automatically add the `http://` protocol, so the link will look as follows: `http://ckeditor.com`.
+ *
+ * The feature also provides email address auto-detection. When you submit `hello@example.com`,
+ * the plugin will automatically change it to `mailto:hello@example.com`.
+ *
+ * 		ClassicEditor
+ *			.create( editorElement, {
+ * 				link: {
+ * 					defaultProtocol: 'http://'
+ * 				}
+ *			} )
+ *			.then( ... )
+ *			.catch( ... );
+ *
+ * **NOTE:** If no configuration is provided, the editor will not auto-fix the links.
+ *
+ * @member {String} module:link/link~LinkConfig#defaultProtocol
  */
 
 /**
@@ -147,8 +170,13 @@ export default class Link extends Plugin {
  */
 
 /**
- * Represents a link decorator definition ({@link module:link/link~LinkDecoratorManualDefinition `'manual'`}
- * or {@link module:link/link~LinkDecoratorAutomaticDefinition `'automatic'`}).
+ * A link decorator definition. Two types implement this defition:
+ *
+ * * {@link module:link/link~LinkDecoratorManualDefinition}
+ * * {@link module:link/link~LinkDecoratorAutomaticDefinition}
+ *
+ * Refer to their document for more information about available options or to the
+ * {@glink features/link#custom-link-attributes-decorators link feature guide} for general information.
  *
  * @interface LinkDecoratorDefinition
  */
@@ -203,6 +231,7 @@ export default class Link extends Plugin {
  *		{
  *			mode: 'manual',
  *			label: 'Open in a new tab',
+ *			defaultValue: true,
  *			attributes: {
  *				target: '_blank',
  *				rel: 'noopener noreferrer'
@@ -215,4 +244,5 @@ export default class Link extends Plugin {
  * @property {Object} attributes Key-value pairs used as link attributes added to the output during the
  * {@glink framework/guides/architecture/editing-engine#conversion downcasting}.
  * Attributes should follow the {@link module:engine/view/elementdefinition~ElementDefinition} syntax.
+ * @property {Boolean} [defaultValue] Controls whether the decorator is "on" by default.
  */
